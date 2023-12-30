@@ -126,8 +126,9 @@ def insert_data() -> str:
                 # c.executemany(sql_insert_data_students,)
 
             except Exception as e:
-                print(e)
+                print(f'Error: {e}')
                 connect.rollback()
+                return 'Error! cannot create the database connection.'
 
     return 'Test data was inserted'
 
@@ -146,15 +147,18 @@ def show_data() -> str:
                 for base in ['groups', 'students', 'subjects', 'professors', 'grades']:
                     c.execute(f'select * from {base}')
                     print(f'\nTable {base}:')
-                    print('-'*50)
+                    print('-' * 50)
                     # print table header
                     for i in c.description:
                         print(f'{i[0]:<7}', end=' ')
                     print('', end='\n')
-                    print('-'*50)
+                    print('-' * 50)
                     for row in c.fetchall():
                         print(row)
                     # print(c.fetchall())
+            except sqlite3.OperationalError as e:
+                print(f'Error: {e}, create tables first.')
+                return 'Error! cannot create the database connection.'
 
             except Exception as e:
                 print(e)
