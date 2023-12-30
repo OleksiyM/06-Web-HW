@@ -1,5 +1,10 @@
 db_file_name = './db.sqlite3'
 
+MIN_GRADE = 1
+MAX_GRADE = 5
+
+DAYS_DELTA = 120
+
 students_in_a_group_count = 15
 # random groups names
 groups = ('group_1', 'group_2', 'group_3')
