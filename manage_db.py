@@ -10,6 +10,8 @@ from constants import db_file_name, sql_create_students_table, sql_create_groups
     sql_insert_data_professors, sql_insert_data_grades, \
     students_in_a_group_count, groups, subjects, professors, groups_list
 
+from constants import MIN_GRADE, MAX_GRADE, DAYS_DELTA
+
 
 @contextmanager
 def db_connection(db_file):
@@ -75,10 +77,13 @@ def insert_data() -> str:
     grades_list = []
     for _ in students_list:
         for grade in range(10, randint(11, 20)):
-            random_grade = randint(1, 5)
-            valid_random_date = (datetime.now() - timedelta(days=randint(1, 120))).date()
-            grades_list.append((random_grade, randint(1, len(students_list)),
-                                randint(1, len(subjects)), valid_random_date))
+            random_grade = randint(MIN_GRADE, MAX_GRADE)
+            random_student_id = randint(1, len(students_list))
+            random_subject_id = randint(1, len(subjects))
+            random_date = (datetime.now() -
+                           timedelta(days=randint(1, DAYS_DELTA))).date()
+            grades_list.append((random_grade, random_student_id,
+                                random_subject_id, random_date))
 
     with db_connection(db_file_name) as connect:
         if connect is None:
@@ -97,15 +102,18 @@ def insert_data() -> str:
                 for professor in professors:
                     c.execute(sql_insert_data_professors, (professor,))
                     print(f'{professor} was inserted')
-                print(f'Total {len(professors)} professors records were inserted')
+                print(
+                    f'Total {len(professors)} professors records were inserted')
 
                 for subject in subjects:
-                    c.execute(sql_insert_data_subjects, (subject, randint(1, len(professors))))
+                    c.execute(sql_insert_data_subjects,
+                              (subject, randint(1, len(professors))))
                     print(f'Subject {subject} was inserted')
                 print(f'Total {len(subjects)} subjects records were inserted')
 
                 c.executemany(sql_insert_data_students, students_list)
-                print(f'Total {len(students_list)} students records were inserted')
+                print(
+                    f'Total {len(students_list)} students records were inserted')
 
                 c.executemany(sql_insert_data_grades, grades_list)
                 print(f'Total {len(grades_list)} grades records were inserted')
@@ -127,7 +135,32 @@ def insert_data() -> str:
 def show_data() -> str:
     print('Showing data...')
 
-    return 'Data was shown'
+    db_connection(db_file_name)
+    with db_connection(db_file_name) as connect:
+        if connect is None:
+            return 'Error! cannot create the database connection.'
+
+        else:
+            c = connect.cursor()
+            try:
+                for base in ['groups', 'students', 'subjects', 'professors', 'grades']:
+                    c.execute(f'select * from {base}')
+                    print(f'\nTable {base}:')
+                    print('-'*50)
+                    # print table header
+                    for i in c.description:
+                        print(f'{i[0]:<7}', end=' ')
+                    print('', end='\n')
+                    print('-'*50)
+                    for row in c.fetchall():
+                        print(row)
+                    # print(c.fetchall())
+
+            except Exception as e:
+                print(e)
+                connect.close()
+                connect.rollback()
+    return 'All data was shown'
 
 
 def execute_all_sql():
