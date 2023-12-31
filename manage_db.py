@@ -8,7 +8,7 @@ from constants import db_file_name, sql_create_students_table, sql_create_groups
     sql_create_professors_table, sql_create_subjects_table, sql_grades_table, \
     sql_insert_data_groups, sql_insert_data_students, sql_insert_data_subjects, \
     sql_insert_data_professors, sql_insert_data_grades, \
-    students_in_a_group_count, groups, subjects, professors, groups_list
+    students_in_a_group_count, groups, subjects, professors, table_list, groups_list
 
 from constants import MIN_GRADE, MAX_GRADE, DAYS_DELTA
 
@@ -56,8 +56,8 @@ def create_db_tables() -> str:
 
             # create grades table
             create_table(connect, sql_grades_table)
-
-    return 'DB was created'
+    tables_str = ', '.join(table_list)
+    return f'DB was created with tables {tables_str}'
 
 
 def insert_data() -> str:
@@ -129,8 +129,8 @@ def insert_data() -> str:
                 print(f'Error: {e}')
                 connect.rollback()
                 return 'Error! cannot create the database connection.'
-
-    return 'Test data was inserted'
+    tables_str = ', '.join(table_list)
+    return f'Test data was inserted into tables {tables_str}'
 
 
 def show_data() -> str:
@@ -144,7 +144,7 @@ def show_data() -> str:
         else:
             c = connect.cursor()
             try:
-                for base in ['groups', 'students', 'subjects', 'professors', 'grades']:
+                for base in table_list:
                     c.execute(f'select * from {base}')
                     print(f'\nTable {base}:')
                     print('-' * 50)
@@ -164,7 +164,38 @@ def show_data() -> str:
                 print(e)
                 connect.close()
                 connect.rollback()
-    return 'All data was shown'
+    tables_str = ', '.join(table_list)
+    return f'All data was shown in the tables {tables_str}'
+
+
+def drop_all_tables():
+    print('Dropping all tables...')
+
+    db_connection(db_file_name)
+    with db_connection(db_file_name) as connect:
+        if connect is None:
+            return 'Error! cannot create the database connection.'
+
+        else:
+            c = connect.cursor()
+            try:
+                for base in table_list:
+                    c.execute(f'DROP TABLE {base}')
+                    c.execute(f'VACUUM;')
+                    print(f'Table {base} dropped.')
+                    # print('-' * 50)
+                connect.commit()
+            except sqlite3.OperationalError as e:
+                print(f'Error: {e}, create tables first.')
+                return 'Error! cannot create the database connection.'
+
+            except Exception as e:
+                print(e)
+                connect.close()
+                connect.rollback()
+
+    tables_str = ', '.join(table_list)
+    return f'Tables were dropped: {tables_str}'
 
 
 def execute_all_sql():
@@ -178,13 +209,14 @@ def select_function(inp: str):
 
     functions = {
         'c': create_db_tables,
+        'd': drop_all_tables,
         'i': insert_data,
         's': show_data,
         'h': print_commands,
         'q': execute_all_sql
     }
 
-    if inp not in ['c', 'i', 's', 'h', 'q']:
+    if inp not in ['c', 'd', 'i', 's', 'h', 'q']:
         print('Wrong command!\n')
         return print_commands
 
@@ -193,12 +225,13 @@ def select_function(inp: str):
 
 def print_commands():
     print('Data base interactive handler:')
-    print('press letter and Enter, all other keys - exit')
-    print('c - create all tables in db (after drop if tables already exist')
+    print('choose letter from and press Enter to confirm')
+    print('c - create all tables in db, if tables not exist')
+    print('d - drop all tables in db')
     print('i - insert test data to all tables in db')
-    print('s - show data in all tables in db')
+    print('s - show all data in all tables in db')
     print('q - execute all sql files in the SQL subdirectory')
-    print('h - show available commands')
+    print('h - show available commands (this list)')
     print('x - exit')
     return 'Make you choice'
 
