@@ -5,6 +5,8 @@ MAX_GRADE = 5
 
 DAYS_DELTA = 120
 
+table_list = ('groups', 'students', 'professors', 'subjects', 'grades')
+
 students_in_a_group_count = 15
 # random groups names
 groups = ('group_1', 'group_2', 'group_3')
@@ -35,7 +37,6 @@ CREATE TABLE IF NOT EXISTS students (
         ON UPDATE CASCADE
     );
 """
-
 
 sql_create_professors_table = """
 CREATE TABLE IF NOT EXISTS professors (
