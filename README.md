@@ -12,6 +12,7 @@ This Python application manages a SQLite database containing student, professor,
         - `subjects`
         - `grades`
     - Establishes appropriate foreign key relationships between tables.
+  ![Database diagram](diagrams/db.sqlite3.png)
 - **Test data generation:**
     - Inserts randomly generated student, professor, subject, and grade data into the tables.
 - **Data retrieval and display:**
