@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "06-web-hw"
+version = "0.1.0"
+description = "Database Management Tool"
+authors = ["OleksiyM <OleksiyM@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+faker = "^22.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
