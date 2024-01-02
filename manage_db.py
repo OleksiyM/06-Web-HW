@@ -8,7 +8,7 @@ from constants import db_file_name, sql_create_students_table, sql_create_groups
     sql_create_professors_table, sql_create_subjects_table, sql_grades_table, \
     sql_insert_data_groups, sql_insert_data_students, sql_insert_data_subjects, \
     sql_insert_data_professors, sql_insert_data_grades, \
-    students_in_a_group_count, groups, subjects, professors, table_list, groups_list
+    students_in_a_group_count, groups, subjects, professors, tables_list, tables_str, groups_list
 
 from constants import MIN_GRADE, MAX_GRADE, DAYS_DELTA
 
@@ -21,7 +21,7 @@ def db_connection(db_file):
     connection.close()
 
 
-def create_table(connection, create_table_sql):
+def execute_create_table_sql(connection, create_table_sql):
     try:
         c = connection.cursor()
         c.execute(create_table_sql)
@@ -34,7 +34,7 @@ def create_table(connection, create_table_sql):
 def create_db_tables() -> str:
     print('Creating db...')
 
-    db_connection(db_file_name)
+    # db_connection(db_file_name)
 
     with db_connection(db_file_name) as connect:
         if connect is None:
@@ -43,24 +43,24 @@ def create_db_tables() -> str:
 
         else:
             # create groups table
-            create_table(connect, sql_create_groups_table)
+            execute_create_table_sql(connect, sql_create_groups_table)
 
             # create students table
-            create_table(connect, sql_create_students_table)
+            execute_create_table_sql(connect, sql_create_students_table)
 
             # create subjects table
-            create_table(connect, sql_create_subjects_table)
+            execute_create_table_sql(connect, sql_create_subjects_table)
 
             # create professors table
-            create_table(connect, sql_create_professors_table)
+            execute_create_table_sql(connect, sql_create_professors_table)
 
             # create grades table
-            create_table(connect, sql_grades_table)
-    tables_str = ', '.join(table_list)
+            execute_create_table_sql(connect, sql_grades_table)
+
     return f'DB was created with tables {tables_str}'
 
 
-def insert_data() -> str:
+def insert_test_data_into_tables() -> str:
     print('Inserting test data...')
     db_connection(db_file_name)
 
@@ -129,11 +129,11 @@ def insert_data() -> str:
                 print(f'Error: {e}')
                 connect.rollback()
                 return 'Error! cannot create the database connection.'
-    tables_str = ', '.join(table_list)
+
     return f'Test data was inserted into tables {tables_str}'
 
 
-def show_data() -> str:
+def show_data_from_all_tables() -> str:
     print('Showing data...')
 
     db_connection(db_file_name)
@@ -144,7 +144,7 @@ def show_data() -> str:
         else:
             c = connect.cursor()
             try:
-                for base in table_list:
+                for base in tables_list:
                     c.execute(f'select * from {base}')
                     print(f'\nTable {base}:')
                     print('-' * 50)
@@ -164,7 +164,6 @@ def show_data() -> str:
                 print(e)
                 connect.close()
                 connect.rollback()
-    tables_str = ', '.join(table_list)
     return f'All data was shown in the tables {tables_str}'
 
 
@@ -179,7 +178,7 @@ def drop_all_tables():
         else:
             c = connect.cursor()
             try:
-                for base in table_list:
+                for base in tables_list:
                     c.execute(f'DROP TABLE {base}')
                     c.execute(f'VACUUM;')
                     print(f'Table {base} dropped.')
@@ -194,13 +193,67 @@ def drop_all_tables():
                 connect.close()
                 connect.rollback()
 
-    tables_str = ', '.join(table_list)
     return f'Tables were dropped: {tables_str}'
 
 
-def execute_all_sql():
-    print('Executing all sql files...')
+def read_from_sql_file(task_number: int) -> str | None:
+    # print(f'Executing sql file {num}')
+    with open(f'./SQL/query_{task_number}.sql', 'r') as f:
+        sql_file = f.read()
+    return sql_file if sql_file else None
 
+
+def get_sql_task_description(task_number: int) -> str:
+    messages = (
+        'Find 5 students with the highest average score in all subjects.',
+        'Find the student with the highest grade point average in a particular subject.',
+        'Find the average score in groups for a particular subject.',
+        'Find the average grade point average in a stream (across the entire grade table).',
+        'Find what courses a certain teacher teaches.',
+        'Find a list of students in a particular group.',
+        'Find the grades of students in a particular group in a particular subject.',
+        'Find the average grade given by a certain teacher in his/her subjects.',
+        'Find the list of courses a student is taking.',
+        'Find the list of courses taught by a certain teacher to a certain student.',
+        'Bonus: The average grade that a certain teacher gives to a certain student.',
+        'Bonus: Grades of students in a certain group in a certain subject in the last class.'
+    )
+    return messages[task_number]
+
+
+def run_all_sql_scripts_from_directory():
+    print('Executing all sql files...')
+    for num in range(1, 13):
+        print(f'#{num}: {get_sql_task_description(num - 1)}')
+        sql_file = read_from_sql_file(num)
+        if not sql_file:
+            return f'Error! cannot read the sql file ./SQL/query_{num}.sql.'
+        print(f'{sql_file}')
+        with db_connection(db_file_name) as connect:
+            if connect is None:
+                return 'Error! cannot create the database connection.'
+
+            else:
+                c = connect.cursor()
+                try:
+                    c.execute(sql_file)
+                    print('-' * 50)
+                    # print table header
+                    for i in c.description:
+                        print(f'{i[0]:<7}', end=' ')
+                    print('', end='\n')
+                    print('-' * 50)
+                    for row in c.fetchall():
+                        print(row)
+
+                    print(f'SQL file ./SQL/query_{num}.sql was executed')
+                except Exception as e:
+                    print(f'Error: {e}')
+                    connect.rollback()
+                    return 'Error! cannot create the database connection.'
+        # connect.commit()
+        connect.close()
+        print('-' * 50)
     return 'SQL files were executed'
 
 
@@ -210,10 +263,10 @@ def select_function(inp: str):
     functions = {
         'c': create_db_tables,
         'd': drop_all_tables,
-        'i': insert_data,
-        's': show_data,
+        'i': insert_test_data_into_tables,
+        's': show_data_from_all_tables,
         'h': print_commands,
-        'q': execute_all_sql
+        'q': run_all_sql_scripts_from_directory
     }
 
     if inp not in ['c', 'd', 'i', 's', 'h', 'q']:
@@ -224,15 +277,16 @@ def select_function(inp: str):
 
 
 def print_commands():
+
     print('Data base interactive handler:')
     print('choose letter from and press Enter to confirm')
-    print('c - create all tables in db, if tables not exist')
-    print('d - drop all tables in db')
-    print('i - insert test data to all tables in db')
-    print('s - show all data in all tables in db')
-    print('q - execute all sql files in the SQL subdirectory')
-    print('h - show available commands (this list)')
-    print('x - exit')
+    print('c - Create database tables')
+    print('d - Drop all database tables')
+    print('i - Insert test data into tables')
+    print('s - Show data from all tables')
+    print('q - Execute all SQL files in the `SQL` subdirectory')
+    print('h - Display this help menu')
+    print('x - Exit the application')
     return 'Make you choice'
 
 
