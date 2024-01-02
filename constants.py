@@ -5,7 +5,9 @@ MAX_GRADE = 5
 
 DAYS_DELTA = 120
 
-table_list = ('groups', 'students', 'professors', 'subjects', 'grades')
+tables_list = ('groups', 'students', 'professors', 'subjects', 'grades')
+
+tables_str = ', '.join(tables_list)
 
 students_in_a_group_count = 15
 # random groups names
