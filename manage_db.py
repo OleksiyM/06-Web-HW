@@ -198,7 +198,7 @@ def drop_all_tables():
 
 def read_from_sql_file(task_number: int) -> str | None:
     # print(f'Executing sql file {num}')
-    with open(f'./SQL/query_{task_number}.sql', 'r') as f:
+    with open(f'./sql/query_{task_number}.sql', 'r') as f:
         sql_file = f.read()
     return sql_file if sql_file else None
 
@@ -227,7 +227,7 @@ def run_all_sql_scripts_from_directory():
         print(f'#{num}: {get_sql_task_description(num - 1)}')
         sql_file = read_from_sql_file(num)
         if not sql_file:
-            return f'Error! cannot read the sql file ./SQL/query_{num}.sql.'
+            return f'Error! cannot read the sql file ./sql/query_{num}.sql.'
         print(f'{sql_file}')
         with db_connection(db_file_name) as connect:
             if connect is None:
@@ -246,7 +246,7 @@ def run_all_sql_scripts_from_directory():
                     for row in c.fetchall():
                         print(row)
 
-                    print(f'SQL file ./SQL/query_{num}.sql was executed')
+                    print(f'SQL file ./sql/query_{num}.sql was executed')
                 except Exception as e:
                     print(f'Error: {e}')
                     connect.rollback()
